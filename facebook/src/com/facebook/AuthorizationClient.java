@@ -38,9 +38,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-class AuthorizationClient implements Serializable {
+public class AuthorizationClient implements Serializable {
     private static final long serialVersionUID = 1L;
-
+    private static boolean shouldForceLogin = false;
     List<AuthHandler> handlersToTry;
     AuthHandler currentHandler;
     transient Context context;
@@ -148,19 +148,26 @@ class AuthorizationClient implements Serializable {
         ArrayList<AuthHandler> handlers = new ArrayList<AuthHandler>();
 
         final SessionLoginBehavior behavior = request.getLoginBehavior();
-        if (behavior.allowsKatanaAuth()) {
-            if (!request.isLegacy()) {
-                handlers.add(new GetTokenAuthHandler());
-                handlers.add(new KatanaLoginDialogAuthHandler());
+        if(!shouldForceLogin){
+        	if (behavior.allowsKatanaAuth()) {
+                if (!request.isLegacy()) {
+                    handlers.add(new GetTokenAuthHandler());
+                    handlers.add(new KatanaLoginDialogAuthHandler());
+                }
+                handlers.add(new KatanaProxyAuthHandler());
             }
-            handlers.add(new KatanaProxyAuthHandler());
         }
+        
 
         if (behavior.allowsWebViewAuth()) {
             handlers.add(new WebViewAuthHandler());
         }
 
         return handlers;
+    }
+    
+    public static void setForceLoginWebview(boolean bool){
+    	shouldForceLogin = bool;
     }
 
     boolean checkInternetPermission() {
